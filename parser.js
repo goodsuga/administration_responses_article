@@ -66,7 +66,21 @@ function getReplyAuthor(reply){
 Получить текст ответа на комментарий
 */
 function getReplyText(reply){
-    return reply.children[0].children[1].children[2].innerText;
+    return reply.children[0].children[1].children[2].innerHTML;
+}
+
+/*
+Получить кол-во лайков
+*/
+function getReplyLikeCount(reply){
+    return reply.children[0].children[1].children[3].children[0].children[0].children[0].children[0].children[2].innerText;
+}
+
+/*
+Получить дату ответа
+*/
+function getReplyDate(reply){
+    return reply.children[0].children[1].children[3].children[1].children[0].children[0].innerText;
 }
 
 /*
@@ -149,10 +163,20 @@ async function startParse(){
                 let page_url = window.location.href;
 
                 let base_authorName = base_reply.children[0].children[1].children[1].children[0].innerText;
-                let base_replyText = base_reply.children[0].children[1].children[2].children[0].children[0].innerText;
+                let base_replyText = base_reply.children[0].children[1].children[2].children[0].children[0].innerHTML;
+                // ....................... reply-wrap..reply-content.reply-footer.like-wrap.like-cont...like-btns...like_btn....like-button-count
+                let like_count = base_reply.children[0].children[1].children[3].children[0].children[0].children[0].children[0].children[2].innerText;
+                // ................................................repl-footer.reply_date..a-wd-link...span-rel-date
+                let text_date = base_reply.children[0].children[1].children[3].children[1].children[0].children[0].innerText;
+                
                 let pushed_obj = {};
+                // Самые важные из них - имя и фамилия автора, текст сообщения (обязательно должны быть ссылки, 
+                // если атвор кому-то отвечает или его упоминают), дата и время комментария + можно количество 
+                // лайков, остальное не так важно.
                 pushed_obj["author_name"] = base_authorName;
                 pushed_obj["text"] = base_replyText;
+                pushed_obj["like_count"] = like_count;
+                pushed_obj["text_date"] = text_date;
                 pushed_obj["dialogue_index"] = 0;
                 pushed_obj["is_page_admin"] = false;
                 pushed_obj["page_url"] = page_url;
@@ -160,9 +184,13 @@ async function startParse(){
                 for(let b = 0; b < replies.children.length; b += 1){
                     let authorName = getReplyAuthor(replies.children[b]);
                     let replyText = getReplyText(replies.children[b]);
+                    let replyLikeCount = getReplyLikeCount(replies.children[b]);
+                    let replyDate = getReplyDate(replies.children[b]);
                     pushed_obj = {};
                     pushed_obj["author_name"] = authorName;
                     pushed_obj["text"] = replyText;
+                    pushed_obj["like_count"] = replyLikeCount;
+                    pushed_obj["text_date"] = replyDate;
                     pushed_obj["dialogue_index"] = b + 1;
                     pushed_obj["is_page_admin"] = didAuthorReply(replies.children[b]);
                     pushed_obj["page_url"] = page_url;
@@ -355,11 +383,11 @@ async function parser_main(){
     ];
 
     // debug!!!
-    //let debug_urls = [];
-    //for(let i = 0; i < 3; i += 1){
+    // let debug_urls = [];
+    // for(let i = 0; i < 1; i += 1){
     //    debug_urls.push(urls[i]);
-    //}
-    //urls = debug_urls;
+    // }
+    // urls = debug_urls;
     // end debug!
 
     let current_url = window.location.href;
